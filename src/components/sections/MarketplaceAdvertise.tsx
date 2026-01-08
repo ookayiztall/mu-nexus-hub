@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import SectionHeader from './SectionHeader';
 import { ExternalLink } from 'lucide-react';
+import { useClickTracking } from '@/hooks/useClickTracking';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Advertisement = Tables<'advertisements'>;
@@ -14,6 +15,7 @@ const fallbackAds = [
 
 const MarketplaceAdvertise = () => {
   const [ads, setAds] = useState<Advertisement[]>([]);
+  const { trackAdClick } = useClickTracking();
 
   useEffect(() => {
     const fetchAds = async () => {
@@ -48,6 +50,7 @@ const MarketplaceAdvertise = () => {
             href={`https://${ad.website}`}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackAdClick(ad.id, ad.website)}
             className="ad-banner block relative group"
           >
             <div className="flex items-center gap-2 p-1.5 bg-muted/30 rounded border border-border/30">

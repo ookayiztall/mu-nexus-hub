@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Crown, Star, Sparkles, Megaphone, Image } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
+import { SEOHead } from '@/components/SEOHead';
 interface PricingPackage {
   id: string;
   name: string;
@@ -141,6 +141,11 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="Premium Packages - MU Online Hub"
+        description="Boost your MU Online server visibility with premium packages. VIP listings, top banners, and rotating promos to attract more players."
+        keywords="MU Online premium, server advertising, VIP listing, MU promotion"
+      />
       <Header />
       <div className="container py-8">
         <div className="text-center mb-10">

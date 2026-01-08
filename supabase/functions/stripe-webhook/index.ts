@@ -60,7 +60,7 @@ serve(async (req) => {
       const session = event.data.object;
       console.log("Checkout session completed:", session.id);
 
-      const { user_id, package_id, product_id, product_type, duration_days } = session.metadata || {};
+      const { user_id, package_id, product_id, product_type, duration_days, package_name } = session.metadata || {};
 
       // Update payment record
       const { error: paymentError } = await supabaseAdmin
@@ -113,17 +113,45 @@ serve(async (req) => {
           break;
 
         case "top_banner":
-          // User needs to submit banner details after payment
           console.log("Top banner payment completed for user:", user_id);
           break;
 
         case "rotating_promo":
-          // User needs to submit promo details after payment
           console.log("Rotating promo payment completed for user:", user_id);
           break;
 
         default:
           console.log("Unknown product type:", product_type);
+      }
+
+      // Send payment success email
+      if (user_id && session.customer_details?.email) {
+        try {
+          const siteUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "") || "https://muonlinehub.com";
+          
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+            },
+            body: JSON.stringify({
+              type: "payment_success",
+              to: session.customer_details.email,
+              data: {
+                name: session.customer_details.name || "User",
+                packageName: package_name || product_type || "Premium Package",
+                amount: ((session.amount_total || 0) / 100).toFixed(2),
+                duration: duration_days || "7",
+                expiresAt: expiresAt.toLocaleDateString(),
+                siteUrl,
+              },
+            }),
+          });
+          console.log("Payment success email sent to:", session.customer_details.email);
+        } catch (emailError) {
+          console.error("Failed to send payment email:", emailError);
+        }
       }
     }
 
