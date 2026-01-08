@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, X, LogOut, Shield, User, Crown } from 'lucide-react';
+import { Menu, X, LogOut, Shield, User, Crown, UserCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,6 +81,10 @@ const Header = () => {
                       <User size={16} className="mr-2" />
                       My Dashboard
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <UserCircle size={16} className="mr-2" />
+                      My Profile
+                    </DropdownMenuItem>
                     {isAdmin && (
                       <DropdownMenuItem onClick={() => navigate('/admin')}>
                         <Shield size={16} className="mr-2" />
@@ -129,6 +133,10 @@ const Header = () => {
                   <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/dashboard')}>
                     <User size={16} className="mr-2" />
                     My Dashboard
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/profile')}>
+                    <UserCircle size={16} className="mr-2" />
+                    My Profile
                   </Button>
                   {isAdmin && (
                     <Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/admin')}>

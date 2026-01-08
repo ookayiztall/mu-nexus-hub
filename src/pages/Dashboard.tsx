@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { ImageUpload } from '@/components/upload/ImageUpload';
+import { SEOHead } from '@/components/SEOHead';
 import type { Tables } from '@/integrations/supabase/types';
 
 type ServerType = Tables<'servers'>;
@@ -185,6 +186,10 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead 
+        title="Dashboard - MU Online Hub"
+        description="Manage your MU Online servers and advertisements from your personal dashboard."
+      />
       <Header />
       <div className="container py-6">
         <div className="mb-8">

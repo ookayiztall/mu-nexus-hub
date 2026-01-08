@@ -10,10 +10,12 @@ import PartnersSection from '@/components/sections/PartnersSection';
 import ArcanaProjects from '@/components/sections/ArcanaProjects';
 import UpcomingServers from '@/components/widgets/UpcomingServers';
 import RotatingPromos from '@/components/widgets/RotatingPromos';
+import { SEOHead } from '@/components/SEOHead';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead />
       <Header />
       <RotatingHeadlines />
       

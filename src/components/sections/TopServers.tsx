@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import SectionHeader from './SectionHeader';
 import { ExternalLink, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useClickTracking } from '@/hooks/useClickTracking';
 import type { Tables } from '@/integrations/supabase/types';
 
 type ServerType = Tables<'servers'>;
@@ -15,7 +16,7 @@ const fallbackServers = [
 
 const TopServers = () => {
   const [servers, setServers] = useState<ServerType[]>([]);
-
+  const { trackServerClick } = useClickTracking();
   useEffect(() => {
     const fetchServers = async () => {
       const { data } = await supabase
@@ -49,6 +50,7 @@ const TopServers = () => {
               href={`https://${server.website}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => 'id' in server && trackServerClick(server.id, server.website)}
               className="server-item block rounded-lg overflow-hidden border border-border/30 bg-muted/20 group"
             >
               <div className="relative">
