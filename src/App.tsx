@@ -11,6 +11,10 @@ import Dashboard from "./pages/Dashboard";
 import Pricing from "./pages/Pricing";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import Marketplace from "./pages/Marketplace";
+import Services from "./pages/Services";
+import CreateServer from "./pages/CreateServer";
+import ArcanaProjects from "./pages/ArcanaProjects";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +34,10 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/create-server" element={<CreateServer />} />
+            <Route path="/arcana-projects" element={<ArcanaProjects />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -2,15 +2,22 @@ import Header from '@/components/layout/Header';
 import RotatingHeadlines from '@/components/layout/RotatingHeadlines';
 import PremiumBanner from '@/components/banners/PremiumBanner';
 import PremiumTextServers from '@/components/widgets/PremiumTextServers';
-import QuickLinks from '@/components/widgets/QuickLinks';
+import UpcomingServers from '@/components/widgets/UpcomingServers';
+import RotatingPromos from '@/components/widgets/RotatingPromos';
+import { SEOHead } from '@/components/SEOHead';
+
+// Parent intro sections
+import MarketplaceIntro from '@/components/sections/MarketplaceIntro';
+import ServicesIntro from '@/components/sections/ServicesIntro';
+import CreateServerIntro from '@/components/sections/CreateServerIntro';
+import ArcanaIntro from '@/components/sections/ArcanaIntro';
+
+// Child listing sections
 import MarketplaceAdvertise from '@/components/sections/MarketplaceAdvertise';
 import ServicesAdvertise from '@/components/sections/ServicesAdvertise';
 import TopServers from '@/components/sections/TopServers';
 import PartnersSection from '@/components/sections/PartnersSection';
 import ArcanaProjects from '@/components/sections/ArcanaProjects';
-import UpcomingServers from '@/components/widgets/UpcomingServers';
-import RotatingPromos from '@/components/widgets/RotatingPromos';
-import { SEOHead } from '@/components/SEOHead';
 
 const Index = () => {
   return (
@@ -19,7 +26,7 @@ const Index = () => {
       <Header />
       <RotatingHeadlines />
       
-      <main className="container py-6 space-y-6">
+      <main className="container py-6 space-y-8">
         {/* Top Row: Premium Text Servers + Banner + Upcoming Widget */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Left Widget - Premium Text Servers */}
@@ -38,32 +45,58 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Quick Links Row */}
-        <QuickLinks />
-
         {/* Rotating Promo Bars */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <RotatingPromos type="discount" />
           <RotatingPromos type="event" />
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Left Column - Marketplace + Services */}
-          <div className="lg:col-span-3 space-y-4">
-            <MarketplaceAdvertise />
-            <ServicesAdvertise />
+        {/* Main Content: 3 Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* LEFT COLUMN - Marketplace & Services Groups */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* GROUP 1: Marketplace (Parent → Child) */}
+            <section id="marketplace" className="space-y-0">
+              <MarketplaceIntro />
+              <div className="border-l-2 border-primary/30 ml-4 pl-4 pt-4">
+                <MarketplaceAdvertise />
+              </div>
+            </section>
+
+            {/* GROUP 2: Services (Parent → Child) */}
+            <section id="services" className="space-y-0">
+              <ServicesIntro />
+              <div className="border-l-2 border-secondary/30 ml-4 pl-4 pt-4">
+                <ServicesAdvertise />
+              </div>
+            </section>
           </div>
 
-          {/* Center Column - Top Servers */}
+          {/* CENTER COLUMN - Top Servers (Core Listing) */}
           <div className="lg:col-span-6">
-            <TopServers />
+            <section id="servers">
+              <TopServers />
+            </section>
           </div>
 
-          {/* Right Column - Partners + Arcana */}
-          <div className="lg:col-span-3 space-y-4">
-            <PartnersSection />
-            <ArcanaProjects />
+          {/* RIGHT COLUMN - Create Server & Arcana Groups */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* GROUP 3: Create Server (Parent → Child) */}
+            <section id="create" className="space-y-0">
+              <CreateServerIntro />
+              <div className="border-l-2 border-secondary/30 ml-4 pl-4 pt-4">
+                <PartnersSection />
+              </div>
+            </section>
+
+            {/* GROUP 4: Arcana Projects (Parent → Child) */}
+            <section id="arcana" className="space-y-0">
+              <ArcanaIntro />
+              <div className="border-l-2 border-primary/30 ml-4 pl-4 pt-4">
+                <ArcanaProjects />
+              </div>
+            </section>
           </div>
         </div>
 
