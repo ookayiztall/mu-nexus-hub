@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  type: "welcome" | "payment_success" | "password_reset";
+  type: "welcome" | "payment_success" | "password_reset" | "listing_purchased" | "listing_expiring";
   to: string;
   data?: Record<string, string>;
 }
@@ -73,6 +73,50 @@ const emailTemplates = {
         </p>
         <p style="color: #888; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
         <p style="color: #888; font-size: 14px;">This link will expire in 1 hour.</p>
+        <p style="color: #888; font-size: 12px; margin-top: 40px; text-align: center;">
+          © MU Online Hub. All rights reserved.
+        </p>
+      </div>
+    `,
+  }),
+
+  listing_purchased: (data: Record<string, string>) => ({
+    subject: "Your Listing Was Purchased! - MU Online Hub",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: #eee;">
+        <h1 style="color: #f4c430; text-align: center;">🎉 You Made a Sale!</h1>
+        <p>Hi ${data.sellerName || "there"},</p>
+        <p>Great news! Someone just purchased your listing on MU Online Hub.</p>
+        <div style="background: #2a2a4e; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Listing:</strong> ${data.listingTitle}</p>
+          <p><strong>Amount:</strong> $${data.amount}</p>
+          <p><strong>Buyer:</strong> ${data.buyerEmail}</p>
+        </div>
+        <p>The buyer may contact you for delivery. Make sure to fulfill the order promptly!</p>
+        <p style="text-align: center; margin-top: 30px;">
+          <a href="${data.siteUrl}/seller-dashboard" style="background: #f4c430; color: #1a1a2e; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Dashboard</a>
+        </p>
+        <p style="color: #888; font-size: 12px; margin-top: 40px; text-align: center;">
+          © MU Online Hub. All rights reserved.
+        </p>
+      </div>
+    `,
+  }),
+
+  listing_expiring: (data: Record<string, string>) => ({
+    subject: "Your Listing is Expiring Soon - MU Online Hub",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #1a1a2e; color: #eee;">
+        <h1 style="color: #f4c430; text-align: center;">⏰ Listing Expiring Soon</h1>
+        <p>Hi ${data.sellerName || "there"},</p>
+        <p>Your listing on MU Online Hub is expiring soon. Renew now to keep it visible!</p>
+        <div style="background: #2a2a4e; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Listing:</strong> ${data.listingTitle}</p>
+          <p><strong>Expires:</strong> ${data.expiresAt}</p>
+        </div>
+        <p style="text-align: center; margin-top: 30px;">
+          <a href="${data.siteUrl}/seller-dashboard" style="background: #f4c430; color: #1a1a2e; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Renew Listing</a>
+        </p>
         <p style="color: #888; font-size: 12px; margin-top: 40px; text-align: center;">
           © MU Online Hub. All rights reserved.
         </p>

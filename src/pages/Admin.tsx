@@ -18,10 +18,12 @@ import {
   Users,
   Server,
   Megaphone,
-  BarChart3
+  BarChart3,
+  CreditCard
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard';
+import { StripeSettings } from '@/components/admin/StripeSettings';
 import type { Tables } from '@/integrations/supabase/types';
 
 type PremiumBanner = Tables<'premium_banners'>;
@@ -274,10 +276,14 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="analytics" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 size={16} />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="stripe" className="gap-2">
+              <CreditCard size={16} />
+              Payments
             </TabsTrigger>
             <TabsTrigger value="banners" className="gap-2">
               <Image size={16} />
@@ -300,6 +306,11 @@ const Admin = () => {
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <AnalyticsDashboard />
+          </TabsContent>
+
+          {/* Stripe Settings Tab */}
+          <TabsContent value="stripe" className="space-y-6">
+            <StripeSettings />
           </TabsContent>
 
           {/* Premium Banners Tab */}

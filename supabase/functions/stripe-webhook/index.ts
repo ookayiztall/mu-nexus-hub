@@ -60,97 +60,163 @@ serve(async (req) => {
       const session = event.data.object;
       console.log("Checkout session completed:", session.id);
 
-      const { user_id, package_id, product_id, product_type, duration_days, package_name } = session.metadata || {};
+      const metadata = session.metadata || {};
+      
+      // Check if this is a listing purchase (from create-listing-checkout)
+      if (metadata.listing_id && metadata.buyer_id && metadata.seller_id) {
+        console.log("Processing listing purchase:", metadata.listing_id);
 
-      // Update payment record
-      const { error: paymentError } = await supabaseAdmin
-        .from("payments")
-        .update({
-          status: "completed",
-          stripe_payment_intent_id: session.payment_intent,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("stripe_session_id", session.id);
+        // Update listing purchase record
+        const { error: purchaseError } = await supabaseAdmin
+          .from("listing_purchases")
+          .update({
+            status: "completed",
+            stripe_payment_intent_id: session.payment_intent,
+            completed_at: new Date().toISOString(),
+          })
+          .eq("stripe_session_id", session.id);
 
-      if (paymentError) {
-        console.error("Failed to update payment:", paymentError);
-      }
+        if (purchaseError) {
+          console.error("Failed to update listing purchase:", purchaseError);
+        }
 
-      // Calculate expiration date
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + parseInt(duration_days || "7"));
-
-      // Activate the feature based on product type
-      switch (product_type) {
-        case "premium_listing":
-          if (product_id) {
-            await supabaseAdmin
-              .from("servers")
-              .update({ 
-                is_premium: true, 
-                is_active: true,
-                expires_at: expiresAt.toISOString() 
-              })
-              .eq("id", product_id);
-            console.log("Activated premium listing for server:", product_id);
-          }
-          break;
-
-        case "vip_gold":
-        case "vip_diamond":
-          if (product_id) {
-            const vipLevel = product_type === "vip_gold" ? "gold" : "diamond";
-            await supabaseAdmin
-              .from("advertisements")
-              .update({ 
-                vip_level: vipLevel, 
-                is_active: true,
-                expires_at: expiresAt.toISOString() 
-              })
-              .eq("id", product_id);
-            console.log("Activated VIP for ad:", product_id);
-          }
-          break;
-
-        case "top_banner":
-          console.log("Top banner payment completed for user:", user_id);
-          break;
-
-        case "rotating_promo":
-          console.log("Rotating promo payment completed for user:", user_id);
-          break;
-
-        default:
-          console.log("Unknown product type:", product_type);
-      }
-
-      // Send payment success email
-      if (user_id && session.customer_details?.email) {
-        try {
-          const siteUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "") || "https://muonlinehub.com";
-          
-          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-            },
-            body: JSON.stringify({
-              type: "payment_success",
-              to: session.customer_details.email,
-              data: {
-                name: session.customer_details.name || "User",
-                packageName: package_name || product_type || "Premium Package",
-                amount: ((session.amount_total || 0) / 100).toFixed(2),
-                duration: duration_days || "7",
-                expiresAt: expiresAt.toLocaleDateString(),
-                siteUrl,
+        // Send email to seller
+        if (metadata.seller_email) {
+          try {
+            const siteUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "") || "https://muonlinehub.com";
+            
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
               },
-            }),
-          });
-          console.log("Payment success email sent to:", session.customer_details.email);
-        } catch (emailError) {
-          console.error("Failed to send payment email:", emailError);
+              body: JSON.stringify({
+                type: "listing_purchased",
+                to: metadata.seller_email,
+                data: {
+                  sellerName: "Seller",
+                  listingTitle: metadata.listing_title || "Your listing",
+                  amount: ((session.amount_total || 0) / 100).toFixed(2),
+                  buyerEmail: session.customer_details?.email || "Anonymous",
+                  siteUrl,
+                },
+              }),
+            });
+            console.log("Seller notification email sent to:", metadata.seller_email);
+          } catch (emailError) {
+            console.error("Failed to send seller notification:", emailError);
+          }
+        }
+      } else {
+        // Handle other payment types (premium listing, VIP, etc.)
+        const { user_id, package_id, product_id, product_type, duration_days, package_name } = metadata;
+
+        // Update payment record
+        const { error: paymentError } = await supabaseAdmin
+          .from("payments")
+          .update({
+            status: "completed",
+            stripe_payment_intent_id: session.payment_intent,
+            completed_at: new Date().toISOString(),
+          })
+          .eq("stripe_session_id", session.id);
+
+        if (paymentError) {
+          console.error("Failed to update payment:", paymentError);
+        }
+
+        // Calculate expiration date
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + parseInt(duration_days || "7"));
+
+        // Activate the feature based on product type
+        switch (product_type) {
+          case "premium_listing":
+            if (product_id) {
+              await supabaseAdmin
+                .from("servers")
+                .update({ 
+                  is_premium: true, 
+                  is_active: true,
+                  expires_at: expiresAt.toISOString() 
+                })
+                .eq("id", product_id);
+              console.log("Activated premium listing for server:", product_id);
+            }
+            break;
+
+          case "vip_gold":
+          case "vip_diamond":
+            if (product_id) {
+              const vipLevel = product_type === "vip_gold" ? "gold" : "diamond";
+              await supabaseAdmin
+                .from("advertisements")
+                .update({ 
+                  vip_level: vipLevel, 
+                  is_active: true,
+                  expires_at: expiresAt.toISOString() 
+                })
+                .eq("id", product_id);
+              console.log("Activated VIP for ad:", product_id);
+            }
+            break;
+
+          case "marketplace_listing":
+            if (product_id) {
+              await supabaseAdmin
+                .from("listings")
+                .update({ 
+                  is_published: true, 
+                  is_active: true,
+                  published_at: new Date().toISOString(),
+                  expires_at: expiresAt.toISOString() 
+                })
+                .eq("id", product_id);
+              console.log("Published marketplace listing:", product_id);
+            }
+            break;
+
+          case "top_banner":
+            console.log("Top banner payment completed for user:", user_id);
+            break;
+
+          case "rotating_promo":
+            console.log("Rotating promo payment completed for user:", user_id);
+            break;
+
+          default:
+            console.log("Unknown product type:", product_type);
+        }
+
+        // Send payment success email
+        if (user_id && session.customer_details?.email) {
+          try {
+            const siteUrl = Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", "") || "https://muonlinehub.com";
+            
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-email`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+              },
+              body: JSON.stringify({
+                type: "payment_success",
+                to: session.customer_details.email,
+                data: {
+                  name: session.customer_details.name || "User",
+                  packageName: package_name || product_type || "Premium Package",
+                  amount: ((session.amount_total || 0) / 100).toFixed(2),
+                  duration: duration_days || "7",
+                  expiresAt: expiresAt.toLocaleDateString(),
+                  siteUrl,
+                },
+              }),
+            });
+            console.log("Payment success email sent to:", session.customer_details.email);
+          } catch (emailError) {
+            console.error("Failed to send payment email:", emailError);
+          }
         }
       }
     }

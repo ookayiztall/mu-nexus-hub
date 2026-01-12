@@ -20,6 +20,7 @@ import SellerDashboard from "./pages/SellerDashboard";
 import CreateListing from "./pages/CreateListing";
 import EditListing from "./pages/EditListing";
 import PublishListing from "./pages/PublishListing";
+import ListingDetail from "./pages/ListingDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace/:id" element={<ListingDetail />} />
             <Route path="/services" element={<Services />} />
             <Route path="/create-server" element={<CreateServer />} />
             <Route path="/arcana-projects" element={<ArcanaProjects />} />
