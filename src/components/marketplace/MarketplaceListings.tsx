@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Globe, FileCode, Shield, Rocket, Code, Package } from 'lucide-react';
+import { ExternalLink, Globe, FileCode, Shield, Rocket, Code, Package, ShoppingCart } from 'lucide-react';
 
 interface Listing {
   id: string;
@@ -108,11 +109,9 @@ export const MarketplaceListings = ({ searchQuery = '', activeCategory = 'all' }
           const Icon = categoryIcons[listing.category] || Package;
           
           return (
-            <a
+            <Link
               key={listing.id}
-              href={listing.website || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
+              to={`/marketplace/${listing.id}`}
               className="glass-card overflow-hidden group hover:glow-border-gold transition-all"
             >
               {listing.image_url ? (
@@ -128,8 +127,11 @@ export const MarketplaceListings = ({ searchQuery = '', activeCategory = 'all' }
                   </Badge>
                 </div>
               ) : (
-                <div className="aspect-video bg-muted/20 flex items-center justify-center">
+                <div className="aspect-video bg-muted/20 flex items-center justify-center relative">
                   <Icon className="w-12 h-12 text-muted-foreground" />
+                  <Badge className="absolute top-2 left-2 bg-primary/90">
+                    {categoryLabels[listing.category]}
+                  </Badge>
                 </div>
               )}
               <div className="p-4">
@@ -137,18 +139,20 @@ export const MarketplaceListings = ({ searchQuery = '', activeCategory = 'all' }
                   <h3 className="font-display font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                     {listing.title}
                   </h3>
-                  <ExternalLink className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <ShoppingCart className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                 </div>
                 {listing.description && (
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{listing.description}</p>
                 )}
-                {listing.price_usd && (
+                {listing.price_usd ? (
                   <p className="text-lg font-bold text-primary">
                     ${listing.price_usd.toFixed(2)}
                   </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Contact for price</p>
                 )}
               </div>
-            </a>
+            </Link>
           );
         })}
       </div>
