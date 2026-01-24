@@ -41,6 +41,10 @@ interface SlotListing {
   created_at: string;
   rotation_order?: number | null;
   table: string;
+  // Slot 7 specific fields
+  listing_id?: string | null;
+  listing_type?: string | null;
+  attached_listing_title?: string | null;
 }
 
 interface SlotPurchase {
@@ -189,11 +193,26 @@ export const AdminSlotManager = () => {
         .order('created_at');
 
       if (promos) {
+        // For Slot 7 promos, fetch attached listing titles
+        const slot7Promos = promos.filter(p => p.slot_id === 7 && p.listing_id);
+        const listingIds = slot7Promos.map(p => p.listing_id).filter(Boolean);
+        
+        let listingTitles: Record<string, string> = {};
+        if (listingIds.length > 0) {
+          const { data: listings } = await supabase
+            .from('listings')
+            .select('id, title')
+            .in('id', listingIds);
+          if (listings) {
+            listings.forEach(l => { listingTitles[l.id] = l.title; });
+          }
+        }
+
         promos.forEach(p => {
           if (p.slot_id && allListings[p.slot_id]) {
             allListings[p.slot_id].push({
               id: p.id,
-              user_id: '',
+              user_id: p.user_id || '',
               name: p.text,
               website: p.link || '',
               slot_id: p.slot_id,
@@ -202,6 +221,10 @@ export const AdminSlotManager = () => {
               created_at: p.created_at,
               rotation_order: null,
               table: 'rotating_promos',
+              // Slot 7 specific
+              listing_id: p.listing_id,
+              listing_type: p.listing_type,
+              attached_listing_title: p.listing_id ? listingTitles[p.listing_id] : null,
             });
           }
         });
@@ -441,7 +464,7 @@ export const AdminSlotManager = () => {
                           <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                           
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium truncate">{listing.name}</span>
                               {isExpired && (
                                 <Badge variant="destructive" className="text-xs">Expired</Badge>
@@ -449,11 +472,28 @@ export const AdminSlotManager = () => {
                               {!listing.is_active && !isExpired && (
                                 <Badge variant="secondary" className="text-xs">Inactive</Badge>
                               )}
+                              {/* Slot 7 specific badges */}
+                              {slotId === 7 && listing.listing_type && (
+                                <Badge variant="outline" className="text-xs capitalize">
+                                  {listing.listing_type}
+                                </Badge>
+                              )}
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                              {/* Slot 7: Show attached listing info */}
+                              {slotId === 7 && listing.attached_listing_title && (
+                                <span className="text-primary">
+                                  → {listing.attached_listing_title}
+                                </span>
+                              )}
+                              {slotId === 7 && listing.user_id && (
+                                <span className="text-muted-foreground/70">
+                                  User: {listing.user_id.slice(0, 8)}...
+                                </span>
+                              )}
                               {listing.website && (
                                 <a
-                                  href={`https://${listing.website}`}
+                                  href={listing.website.startsWith('http') ? listing.website : `https://${listing.website}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1 hover:text-primary"
