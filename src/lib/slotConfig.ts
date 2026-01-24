@@ -83,9 +83,14 @@ export const SLOT_CONFIG = {
     table: 'rotating_promos',
     icon: 'Percent',
     isFree: false,
-    maxListings: null,
+    maxListings: null, // No limit on stored promos
+    maxVisible: 1, // Ticker-style - single rotating text
+    maxStored: 10, // Max promos stored for rotation
     hasRotation: true,
-    requiresExistingListing: true, // Slot 7 requires an existing listing to promote
+    requiresExistingListing: true, // MUST attach to existing marketplace/services listing
+    isPromotionalAddOn: true, // NOT a standalone listing
+    renderStyle: 'ticker', // Never render as cards/grids/lists
+    hideViewAll: true, // No "view all" link on homepage
   },
   8: {
     id: 8,

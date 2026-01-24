@@ -109,30 +109,45 @@ const CreateSlotListing = () => {
     }
   }, [paymentSuccess, toast]);
 
-  // Fetch user's listings for Slot 7 (Partner Discounts)
+  // Fetch user's PUBLISHED and ACTIVE listings for Slot 7 (Partner Discounts)
+  // Slot 7 is a promotional add-on ONLY - must link to existing listing
   useEffect(() => {
     const fetchUserListings = async () => {
       if (!user || slotId !== 7) return;
       
       setLoadingListings(true);
       try {
-        // Fetch marketplace listings (category is seller_category type)
-        const marketplaceCategories = ['websites', 'server_files', 'antihack', 'launchers', 'custom_scripts'] as const;
-        const servicesCategories = ['web_development', 'server_development', 'graphic_design', 'video_editing', 'marketing', 'other'] as const;
+        // Marketplace categories (from seller_category enum)
+        const marketplaceCategories = [
+          'websites', 'server_files', 'antihack', 'launchers', 'custom_scripts',
+          'mu_websites', 'mu_server_files', 'mu_protection', 'mu_app_developer',
+          'mu_launchers', 'mu_installers', 'mu_hosting'
+        ] as const;
+        
+        // Services categories
+        const servicesCategories = [
+          'server_development', 'design_branding', 'skins_customization',
+          'media', 'promotion', 'streaming', 'content_creators', 'event_master', 'marketing_growth'
+        ] as const;
         
         const categoriesToFetch = selectedListingType === 'marketplace' 
           ? [...marketplaceCategories] 
           : [...servicesCategories];
         
+        // ONLY fetch published AND active listings that belong to user
         const { data, error } = await supabase
           .from('listings')
-          .select('id, title, category')
+          .select('id, title, category, is_published, is_active, user_id')
           .eq('user_id', user.id)
           .eq('is_published', true)
+          .eq('is_active', true)
           .in('category', categoriesToFetch as any);
         
         if (error) throw error;
-        setUserListings(data || []);
+        
+        // Double-check ownership on client side for extra safety
+        const ownedListings = (data || []).filter(l => l.user_id === user.id);
+        setUserListings(ownedListings);
       } catch (error) {
         console.error('Error fetching user listings:', error);
         setUserListings([]);
@@ -240,14 +255,34 @@ const CreateSlotListing = () => {
           break;
 
         case 'rotating_promos':
-          // Special handling for Slot 7 - Partner Discounts (linked to existing listing)
+          // Slot 7 - Partner Discounts: PROMOTIONAL ADD-ON ONLY
+          // Must ALWAYS attach to an existing marketplace/services listing
           if (slotId === 7) {
+            // Validate required fields
             if (!selectedListingId) {
               throw new Error('Please select a listing to promote');
             }
             
-            // Get the selected listing's website for the link
-            const selectedListing = userListings.find(l => l.id === selectedListingId);
+            if (!formData.text?.trim()) {
+              throw new Error('Promotional text is required');
+            }
+            
+            // Verify the listing exists, is published, and belongs to user
+            const { data: verifiedListing, error: verifyError } = await supabase
+              .from('listings')
+              .select('id, title, user_id, is_published, is_active, website')
+              .eq('id', selectedListingId)
+              .eq('user_id', user.id)
+              .eq('is_published', true)
+              .eq('is_active', true)
+              .single();
+            
+            if (verifyError || !verifiedListing) {
+              throw new Error('Selected listing is not valid, not published, or does not belong to you');
+            }
+            
+            // Build link: use custom link if provided, otherwise link to listing page
+            const promoLink = formData.link?.trim() || `/listing/${selectedListingId}`;
             
             result = await supabase
               .from('rotating_promos')
@@ -255,18 +290,18 @@ const CreateSlotListing = () => {
                 user_id: user.id,
                 listing_id: selectedListingId,
                 listing_type: selectedListingType,
-                text: formData.text,
-                highlight: formData.highlight,
-                link: formData.link || undefined,
+                text: formData.text.trim(),
+                highlight: formData.highlight?.trim() || '',
+                link: promoLink,
                 promo_type: 'discount',
                 slot_id: slotId,
-                is_active: true,
+                is_active: false, // Default to inactive - admin can approve/enable
                 expires_at: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : null,
               })
               .select()
               .single();
           } else {
-            // Slot 8 - Server Events (standalone)
+            // Slot 8 - Server Events (standalone promo, no listing required)
             result = await supabase
               .from('rotating_promos')
               .insert({
