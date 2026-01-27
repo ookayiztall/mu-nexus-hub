@@ -61,19 +61,45 @@ serve(async (req) => {
     }
 
     const { packageId, productId, successUrl, cancelUrl }: CheckoutRequest = await req.json();
+    
+    // Validate required fields
+    if (!packageId) {
+      return new Response(
+        JSON.stringify({ error: "Package ID is required", code: "MISSING_REQUIRED_FIELD" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(packageId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid package ID format", code: "INVALID_PACKAGE_ID" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("Checkout request:", { packageId, productId, userId: user.id });
 
-    // Fetch package details
+    // Fetch package details - use maybeSingle to get proper error
     const { data: pkg, error: pkgError } = await supabaseClient
       .from("pricing_packages")
       .select("*")
       .eq("id", packageId)
-      .single();
+      .maybeSingle();
 
-    if (pkgError || !pkg) {
-      console.error("Package not found:", pkgError);
+    if (pkgError) {
+      console.error("Package query error:", pkgError);
       return new Response(
-        JSON.stringify({ error: "Package not found" }),
+        JSON.stringify({ error: "Failed to retrieve package information", code: "INTERNAL_ERROR" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!pkg) {
+      console.error("Package not found:", packageId);
+      return new Response(
+        JSON.stringify({ error: "The selected package is no longer available", code: "INVALID_PACKAGE_ID" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

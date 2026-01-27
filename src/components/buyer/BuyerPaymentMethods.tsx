@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { formatResponseError, formatEdgeFunctionError } from '@/lib/edgeFunctionErrors';
 import { 
-  CreditCard, Wallet, Trash2, Loader2, Plus, 
-  CheckCircle, Star
+  CreditCard, Wallet, Trash2, Loader2, 
+  CheckCircle, Star, AlertCircle
 } from 'lucide-react';
 
 interface PaymentMethod {
@@ -24,14 +26,71 @@ export function BuyerPaymentMethods() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingStripe, setIsAddingStripe] = useState(false);
+  const [isFinalizingSetup, setIsFinalizingSetup] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (user) {
       fetchPaymentMethods();
+      handleSetupCallback();
     }
   }, [user]);
+
+  const handleSetupCallback = async () => {
+    const setupSuccess = searchParams.get('setup_success');
+    const sessionId = searchParams.get('session_id');
+
+    if (setupSuccess === 'true' && sessionId) {
+      setIsFinalizingSetup(true);
+      
+      try {
+        const response = await supabase.functions.invoke('create-setup-intent', {
+          body: { sessionId },
+        });
+
+        if (response.error) {
+          const formattedError = formatResponseError(response);
+          toast({
+            title: 'Setup Error',
+            description: formattedError.message,
+            variant: 'destructive',
+          });
+        } else if (response.data?.success) {
+          toast({
+            title: 'Card Added',
+            description: 'Your payment method has been saved successfully.',
+          });
+          fetchPaymentMethods();
+        }
+      } catch (error) {
+        const formattedError = formatEdgeFunctionError(error);
+        toast({
+          title: 'Error',
+          description: formattedError.message,
+          variant: 'destructive',
+        });
+      } finally {
+        setIsFinalizingSetup(false);
+        // Clean up URL params
+        searchParams.delete('setup_success');
+        searchParams.delete('session_id');
+        searchParams.delete('setup_canceled');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+
+    // Handle canceled setup
+    if (searchParams.get('setup_canceled') === 'true') {
+      toast({
+        title: 'Setup Canceled',
+        description: 'Card setup was canceled.',
+      });
+      searchParams.delete('setup_canceled');
+      setSearchParams(searchParams, { replace: true });
+    }
+  };
 
   const fetchPaymentMethods = async () => {
     if (!user) return;
@@ -55,20 +114,52 @@ export function BuyerPaymentMethods() {
   const handleAddStripeCard = async () => {
     setIsAddingStripe(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-setup-intent');
-      if (error) throw error;
+      const response = await supabase.functions.invoke('create-setup-intent');
       
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
+      if (response.error) {
+        const formattedError = formatResponseError(response);
+        
+        if (formattedError.isConfigurationError) {
+          toast({ 
+            title: 'Payments Unavailable', 
+            description: 'Card payments are currently being configured. Please try again later.' 
+          });
+        } else {
+          toast({ 
+            title: 'Error', 
+            description: formattedError.message, 
+            variant: 'destructive' 
+          });
+        }
+        return;
+      }
+      
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      } else if (response.data?.error) {
+        const formattedError = formatResponseError(response);
         toast({ 
-          title: 'Info', 
-          description: 'Stripe setup is not available yet. Please try again later.' 
+          title: 'Error', 
+          description: formattedError.message, 
+          variant: 'destructive' 
         });
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Failed to add card';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
+      const formattedError = formatEdgeFunctionError(error);
+      
+      if (formattedError.isNetworkError) {
+        toast({ 
+          title: 'Connection Error', 
+          description: 'Unable to connect to payment services. Please check your connection and try again.',
+          variant: 'destructive' 
+        });
+      } else {
+        toast({ 
+          title: 'Error', 
+          description: formattedError.message, 
+          variant: 'destructive' 
+        });
+      }
     } finally {
       setIsAddingStripe(false);
     }
@@ -117,11 +208,14 @@ export function BuyerPaymentMethods() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isFinalizingSetup) {
     return (
       <Card className="glass-card">
-        <CardContent className="flex items-center justify-center py-8">
+        <CardContent className="flex flex-col items-center justify-center py-8 gap-2">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          {isFinalizingSetup && (
+            <p className="text-sm text-muted-foreground">Saving your card...</p>
+          )}
         </CardContent>
       </Card>
     );

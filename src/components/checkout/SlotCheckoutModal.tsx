@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { formatResponseError, formatEdgeFunctionError } from '@/lib/edgeFunctionErrors';
 import {
   Dialog,
   DialogContent,
@@ -61,12 +62,12 @@ export const SlotCheckoutModal = ({
       
       setIsLoadingConfig(true);
       try {
-        // Check PayPal configuration
+        // Check PayPal configuration - use maybeSingle to handle no config
         const { data: paypalConfig } = await supabase
           .from('payment_config')
           .select('*')
           .eq('config_key', 'paypal')
-          .single();
+          .maybeSingle();
 
         let isPayPalConfigured = false;
         if (paypalConfig?.config_value) {
@@ -123,7 +124,7 @@ export const SlotCheckoutModal = ({
 
       // Use PayPal Orders API for proper redirect flow
       if (paymentMethod === 'paypal') {
-        const { data, error } = await supabase.functions.invoke('create-paypal-order', {
+        const response = await supabase.functions.invoke('create-paypal-order', {
           body: {
             type: 'slot',
             packageId,
@@ -133,9 +134,17 @@ export const SlotCheckoutModal = ({
           },
         });
 
-        if (error) throw error;
+        if (response.error) {
+          const formattedError = formatResponseError(response);
+          toast({
+            title: 'PayPal Error',
+            description: formattedError.message,
+            variant: 'destructive',
+          });
+          return;
+        }
 
-        if (data.needsConfiguration) {
+        if (response.data?.needsConfiguration) {
           toast({
             title: 'PayPal Not Available',
             description: 'PayPal is not configured yet.',
@@ -144,14 +153,24 @@ export const SlotCheckoutModal = ({
           return;
         }
 
+        if (response.data?.error) {
+          const formattedError = formatResponseError(response);
+          toast({
+            title: 'PayPal Error',
+            description: formattedError.message,
+            variant: 'destructive',
+          });
+          return;
+        }
+
         // Redirect to PayPal approval URL
-        if (data.approvalUrl) {
-          window.location.href = data.approvalUrl;
+        if (response.data?.approvalUrl) {
+          window.location.href = response.data.approvalUrl;
           return;
         }
       } else {
         // Stripe flow - use existing create-slot-checkout
-        const { data, error } = await supabase.functions.invoke('create-slot-checkout', {
+        const response = await supabase.functions.invoke('create-slot-checkout', {
           body: {
             packageId,
             slotId,
@@ -161,30 +180,48 @@ export const SlotCheckoutModal = ({
           },
         });
 
-        if (error) throw error;
+        if (response.error) {
+          const formattedError = formatResponseError(response);
+          toast({
+            title: 'Checkout Error',
+            description: formattedError.message,
+            variant: 'destructive',
+          });
+          return;
+        }
 
-        if (data.needsConfiguration) {
+        if (response.data?.needsConfiguration) {
           toast({
             title: 'Stripe Not Available',
-            description: 'Stripe is not configured yet.',
+            description: 'Card payments are not configured yet.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (response.data?.error) {
+          const formattedError = formatResponseError(response);
+          toast({
+            title: 'Checkout Error',
+            description: formattedError.message,
             variant: 'destructive',
           });
           return;
         }
 
         // Stripe - redirect to checkout
-        if (data.url) {
-          window.location.href = data.url;
+        if (response.data?.url) {
+          window.location.href = response.data.url;
           return;
         }
       }
 
     } catch (error: unknown) {
       console.error('Checkout error:', error);
-      const message = error instanceof Error ? error.message : 'Please try again.';
+      const formattedError = formatEdgeFunctionError(error);
       toast({
         title: 'Checkout Failed',
-        description: message,
+        description: formattedError.message,
         variant: 'destructive',
       });
     } finally {
