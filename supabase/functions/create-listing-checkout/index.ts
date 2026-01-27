@@ -55,6 +55,24 @@ serve(async (req) => {
     }
 
     const { listingId, successUrl, cancelUrl }: CheckoutRequest = await req.json();
+    
+    // Validate required fields
+    if (!listingId) {
+      return new Response(
+        JSON.stringify({ error: "Listing ID is required", code: "MISSING_REQUIRED_FIELD" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(listingId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid listing ID format", code: "INVALID_LISTING_ID" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("Listing checkout request:", { listingId, userId: user.id });
 
     // Create admin client to fetch seller profile
@@ -63,18 +81,26 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Fetch listing details
+    // Fetch listing details - use maybeSingle for proper error handling
     const { data: listing, error: listingError } = await supabaseClient
       .from("listings")
       .select("*")
       .eq("id", listingId)
       .eq("is_published", true)
-      .single();
+      .maybeSingle();
 
-    if (listingError || !listing) {
-      console.error("Listing not found:", listingError);
+    if (listingError) {
+      console.error("Listing query error:", listingError);
       return new Response(
-        JSON.stringify({ error: "Listing not found" }),
+        JSON.stringify({ error: "Failed to retrieve listing information", code: "INTERNAL_ERROR" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!listing) {
+      console.error("Listing not found:", listingId);
+      return new Response(
+        JSON.stringify({ error: "This listing is no longer available", code: "INVALID_LISTING_ID" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

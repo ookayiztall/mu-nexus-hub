@@ -149,12 +149,12 @@ const BuyerDashboard = () => {
       setReviews(enrichedReviews);
     }
 
-    // Fetch buyer stats
+    // Fetch buyer stats - use maybeSingle to handle no stats yet
     const { data: statsData } = await supabase
       .from('user_stats')
       .select('total_spent_cents, purchases_count, buyer_xp, buyer_level, badges')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (statsData) {
       setStats(statsData);

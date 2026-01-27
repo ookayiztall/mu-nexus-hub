@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { formatResponseError, formatEdgeFunctionError } from '@/lib/edgeFunctionErrors';
 import { 
   CreditCard, Wallet, Loader2, CheckCircle, 
   ExternalLink, Copy, AlertCircle
@@ -51,7 +52,7 @@ export function CheckoutModal({ isOpen, onClose, listing, sellerName }: Checkout
         .from('seller_payment_settings')
         .select('*')
         .eq('user_id', listing.user_id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setSellerSettings(data);
@@ -65,6 +66,9 @@ export function CheckoutModal({ isOpen, onClose, listing, sellerName }: Checkout
         } else if (data.paypal_enabled) {
           setSelectedMethod('paypal');
         }
+      } else {
+        // No settings found - seller hasn't configured payment
+        setSellerSettings(null);
       }
     } catch (error) {
       console.error('Error fetching seller settings:', error);
@@ -92,7 +96,28 @@ export function CheckoutModal({ isOpen, onClose, listing, sellerName }: Checkout
       });
 
       if (response.error) {
-        throw new Error(response.error.message || 'Failed to create checkout');
+        const formattedError = formatResponseError(response);
+        
+        if (formattedError.isConfigurationError) {
+          toast({
+            title: 'Payment Not Available',
+            description: 'Payment system is being configured. Please try again later.',
+            variant: 'destructive',
+          });
+        } else if (formattedError.isNetworkError) {
+          toast({
+            title: 'Connection Error',
+            description: 'Unable to connect to payment services. Please try again.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Error',
+            description: formattedError.message,
+            variant: 'destructive',
+          });
+        }
+        return;
       }
 
       if (response.data?.needsConfiguration) {
@@ -104,14 +129,25 @@ export function CheckoutModal({ isOpen, onClose, listing, sellerName }: Checkout
         return;
       }
 
+      if (response.data?.error) {
+        const formattedError = formatResponseError(response);
+        toast({
+          title: 'Error',
+          description: formattedError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (response.data?.url) {
         window.location.href = response.data.url;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Checkout error:', error);
+      const formattedError = formatEdgeFunctionError(error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to initiate checkout',
+        description: formattedError.message,
         variant: 'destructive',
       });
     } finally {

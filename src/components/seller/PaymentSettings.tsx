@@ -61,12 +61,12 @@ export function PaymentSettings() {
     if (!user) return;
 
     try {
-      // Fetch seller payment settings
+      // Fetch seller payment settings - use maybeSingle to handle no rows
       const { data: settingsData } = await supabase
         .from('seller_payment_settings')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (settingsData) {
         setSettings({
@@ -87,15 +87,18 @@ export function PaymentSettings() {
         console.log('Stripe not configured');
       }
 
-      // Check if PayPal is globally enabled
+      // Check if PayPal is globally enabled - use maybeSingle to handle no config
       const { data: configData } = await supabase
         .from('payment_config')
         .select('config_key, is_enabled')
         .eq('config_key', 'paypal')
-        .single();
+        .maybeSingle();
 
       if (configData) {
         setPaypalGlobalEnabled(configData.is_enabled || false);
+      } else {
+        // No PayPal config found - not enabled
+        setPaypalGlobalEnabled(false);
       }
     } catch (error) {
       console.error('Error fetching payment settings:', error);

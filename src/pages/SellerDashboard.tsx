@@ -100,12 +100,12 @@ const SellerDashboard = () => {
       setListings(listingsData);
     }
 
-    // Fetch earnings stats
+    // Fetch earnings stats - use maybeSingle to handle no stats yet
     const { data: statsData } = await supabase
       .from('user_stats')
       .select('total_earned_cents, sales_count')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     // Fetch pending payouts
     const { data: pendingPayouts } = await supabase
