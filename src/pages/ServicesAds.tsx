@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/layout/Header';
 import { SEOHead } from '@/components/SEOHead';
@@ -75,11 +76,9 @@ const ServicesAds = () => {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredServices.map((service) => (
-              <a
+              <Link
                 key={service.id}
-                href={`https://${service.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                to={`/services-ads/${(service as any).slug || service.id}`}
                 onClick={() => trackAdClick(service.id, service.website)}
                 className="ad-banner block relative group"
               >
@@ -104,7 +103,7 @@ const ServicesAds = () => {
                     <ExternalLink size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                   </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
 

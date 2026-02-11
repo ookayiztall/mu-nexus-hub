@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import SectionHeader from './SectionHeader';
 import { ExternalLink } from 'lucide-react';
@@ -46,11 +47,9 @@ const ServicesAdvertise = () => {
       />
       <div className="flex-1 p-2 space-y-2 overflow-y-auto scrollbar-thin">
         {displayServices.map((service) => (
-          <a
+          <Link
             key={service.id}
-            href={`https://${service.website}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/services-ads/${(service as any).slug || service.id}`}
             onClick={() => trackAdClick(service.id, service.website)}
             className="ad-banner block relative group"
           >
@@ -73,12 +72,12 @@ const ServicesAdvertise = () => {
               </div>
               <ExternalLink size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
             </div>
-          </a>
+          </Link>
         ))}
       </div>
       <div className="p-2 border-t border-border/30">
         <Button variant="outline" size="sm" className="w-full text-xs" asChild>
-          <a href="/services-ads">View All Service Ads</a>
+          <Link to="/services-ads">View All Service Ads</Link>
         </Button>
       </div>
     </div>

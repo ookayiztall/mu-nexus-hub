@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/layout/Header';
 import { SEOHead } from '@/components/SEOHead';
@@ -74,12 +75,9 @@ const Servers = () => {
 
           <div className="space-y-3">
             {filteredServers.map((server) => (
-              <a
+              <Link
                 key={server.id}
-                href={`https://${server.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => 'id' in server && trackServerClick(server.id, server.website)}
+                to={`/servers/${(server as any).slug || server.id}`}
                 className="server-item block rounded-lg overflow-hidden border border-border/30 bg-muted/20 group"
               >
                 <div className="relative">
@@ -103,14 +101,13 @@ const Servers = () => {
                           FULL {server.season} {server.part} - EXP {server.exp_rate}
                         </p>
                       </div>
-                      <ExternalLink size={18} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                     <p className="text-xs text-muted-foreground/70">
                       {server.features?.join(' - ') || 'MU Online Server'}
                     </p>
                   </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
 

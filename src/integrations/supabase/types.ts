@@ -44,13 +44,16 @@ export type Database = {
         Row: {
           ad_type: Database["public"]["Enums"]["ad_type"]
           banner_url: string | null
+          category: Database["public"]["Enums"]["seller_category"] | null
           created_at: string
           description: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
+          price_usd: number | null
           rotation_order: number | null
           slot_id: number | null
+          slug: string | null
           title: string
           updated_at: string
           user_id: string
@@ -60,13 +63,16 @@ export type Database = {
         Insert: {
           ad_type: Database["public"]["Enums"]["ad_type"]
           banner_url?: string | null
+          category?: Database["public"]["Enums"]["seller_category"] | null
           created_at?: string
           description?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          price_usd?: number | null
           rotation_order?: number | null
           slot_id?: number | null
+          slug?: string | null
           title: string
           updated_at?: string
           user_id: string
@@ -76,13 +82,16 @@ export type Database = {
         Update: {
           ad_type?: Database["public"]["Enums"]["ad_type"]
           banner_url?: string | null
+          category?: Database["public"]["Enums"]["seller_category"] | null
           created_at?: string
           description?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
+          price_usd?: number | null
           rotation_order?: number | null
           slot_id?: number | null
+          slug?: string | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -501,6 +510,7 @@ export type Database = {
           slot_id: number | null
           title: string
           updated_at: string
+          user_id: string | null
           website: string
         }
         Insert: {
@@ -512,6 +522,7 @@ export type Database = {
           slot_id?: number | null
           title: string
           updated_at?: string
+          user_id?: string | null
           website: string
         }
         Update: {
@@ -523,6 +534,7 @@ export type Database = {
           slot_id?: number | null
           title?: string
           updated_at?: string
+          user_id?: string | null
           website?: string
         }
         Relationships: []
@@ -874,65 +886,118 @@ export type Database = {
           },
         ]
       }
+      server_votes: {
+        Row: {
+          created_at: string
+          id: string
+          server_id: string
+          user_id: string
+          vote_month: number
+          vote_year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          server_id: string
+          user_id: string
+          vote_month: number
+          vote_year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          server_id?: string
+          user_id?: string
+          vote_month?: number
+          vote_year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "server_votes_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       servers: {
         Row: {
           banner_url: string | null
           click_count: number | null
           created_at: string
+          discord_link: string | null
           exp_rate: string
           expires_at: string | null
           features: string[] | null
           id: string
           is_active: boolean | null
+          is_featured: boolean | null
           is_premium: boolean | null
+          logo_url: string | null
+          long_description: string | null
           name: string
           open_date: string | null
           part: string
           rotation_order: number | null
           season: string
           slot_id: number | null
+          slug: string | null
           updated_at: string
           user_id: string
+          voting_enabled: boolean | null
           website: string
         }
         Insert: {
           banner_url?: string | null
           click_count?: number | null
           created_at?: string
+          discord_link?: string | null
           exp_rate: string
           expires_at?: string | null
           features?: string[] | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
           is_premium?: boolean | null
+          logo_url?: string | null
+          long_description?: string | null
           name: string
           open_date?: string | null
           part: string
           rotation_order?: number | null
           season: string
           slot_id?: number | null
+          slug?: string | null
           updated_at?: string
           user_id: string
+          voting_enabled?: boolean | null
           website: string
         }
         Update: {
           banner_url?: string | null
           click_count?: number | null
           created_at?: string
+          discord_link?: string | null
           exp_rate?: string
           expires_at?: string | null
           features?: string[] | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
           is_premium?: boolean | null
+          logo_url?: string | null
+          long_description?: string | null
           name?: string
           open_date?: string | null
           part?: string
           rotation_order?: number | null
           season?: string
           slot_id?: number | null
+          slug?: string | null
           updated_at?: string
           user_id?: string
+          voting_enabled?: boolean | null
           website?: string
         }
         Relationships: []

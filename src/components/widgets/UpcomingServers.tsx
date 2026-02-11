@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import SectionHeader from '@/components/sections/SectionHeader';
+import { Button } from '@/components/ui/button';
 
 interface ServerWidget {
   id: string;
@@ -9,6 +11,7 @@ interface ServerWidget {
   season: string;
   open_date: string | null;
   website: string;
+  slug?: string | null;
 }
 
 const UpcomingServers = () => {
@@ -18,7 +21,6 @@ const UpcomingServers = () => {
 
   useEffect(() => {
     const fetchServers = async () => {
-      // Fetch servers with slot_id = 6 (Upcoming & Recent) or filter by open_date
       const { data } = await supabase
         .from('servers')
         .select('*')
@@ -62,11 +64,9 @@ const UpcomingServers = () => {
       <SectionHeader title="Upcoming & Recent" />
       <div className="p-2 space-y-1.5">
         {displayServers.map((server, index) => (
-          <a
+          <Link
             key={server.id}
-            href={`https://${server.website}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/servers/${(server as any).slug || server.id}`}
             className={`block p-2 rounded border transition-all ${
               index === currentIndex 
                 ? 'border-secondary/50 bg-secondary/10 glow-border-cyan' 
@@ -84,8 +84,13 @@ const UpcomingServers = () => {
               <span className="text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded">{server.exp_rate}</span>
               <span className="text-[10px] text-muted-foreground">{server.season}</span>
             </div>
-          </a>
+          </Link>
         ))}
+      </div>
+      <div className="p-2 border-t border-border/30">
+        <Button variant="outline" size="sm" className="w-full text-xs" asChild>
+          <Link to="/servers/upcoming">View More Servers</Link>
+        </Button>
       </div>
     </div>
   );
