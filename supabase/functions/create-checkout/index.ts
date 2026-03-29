@@ -63,6 +63,15 @@ serve(async (req) => {
     }
 
     const body = await req.json();
+    
+    // Handle test/ping requests from admin panel
+    if (body.test === true) {
+      return new Response(
+        JSON.stringify({ ok: true, configured: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     const { packageId, productId, productType, successUrl, cancelUrl, metadata }: CheckoutRequest = body;
     
     // Validate required fields
