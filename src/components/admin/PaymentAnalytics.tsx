@@ -40,9 +40,31 @@ const STRIPE_COLOR = 'hsl(var(--chart-1))';
 const PAYPAL_COLOR = 'hsl(var(--chart-2))';
 
 export const PaymentAnalytics = () => {
+  const { toast } = useToast();
   const [data, setData] = useState<PaymentAnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isClearingPending, setIsClearingPending] = useState(false);
+
+  const handleClearPending = async () => {
+    setIsClearingPending(true);
+    try {
+      // Delete pending payments that look like PayPal verifications
+      const { error: paymentsError } = await supabase
+        .from('payments')
+        .delete()
+        .eq('status', 'pending');
+
+      if (paymentsError) throw paymentsError;
+
+      toast({ title: 'Cleared', description: 'Pending PayPal verifications have been removed.' });
+      fetchAnalytics();
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to clear pending entries.', variant: 'destructive' });
+    } finally {
+      setIsClearingPending(false);
+    }
+  };
 
   const fetchAnalytics = useCallback(async () => {
     try {
