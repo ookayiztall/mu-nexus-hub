@@ -335,6 +335,11 @@ const Admin = () => {
             <VotingAdmin />
           </TabsContent>
 
+          {/* Pricing Manager Tab */}
+          <TabsContent value="pricing" className="space-y-6">
+            <PackagePricingManager />
+          </TabsContent>
+
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
             <AnalyticsDashboard />
