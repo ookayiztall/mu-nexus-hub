@@ -693,6 +693,11 @@ const Admin = () => {
               </div>
             </div>
           </TabsContent>
+
+          {/* Admin Guide Tab */}
+          <TabsContent value="guide" className="space-y-6">
+            <AdminGuide />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
