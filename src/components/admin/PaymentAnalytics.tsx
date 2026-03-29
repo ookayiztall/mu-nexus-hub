@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   CreditCard, TrendingUp, DollarSign, RefreshCw,
-  ArrowUpRight, ArrowDownRight, Wallet, Loader2
+  ArrowUpRight, ArrowDownRight, Wallet, Loader2, Trash2
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, Legend
@@ -254,22 +255,35 @@ export const PaymentAnalytics = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h3 className="text-lg font-semibold">Payment Analytics</h3>
           <p className="text-sm text-muted-foreground">
             Combined Stripe + PayPal transaction data
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          {data.pendingTransactions > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleClearPending}
+              disabled={isClearingPending}
+            >
+              {isClearingPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Clear Pending PayPal ({data.pendingTransactions})
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Overview Stats */}
