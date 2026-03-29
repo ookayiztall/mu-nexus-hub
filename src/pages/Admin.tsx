@@ -28,6 +28,8 @@ import { StripeSettings } from '@/components/admin/StripeSettings';
 import { PayPalSettings } from '@/components/admin/PayPalSettings';
 import { AdminSlotManager } from '@/components/admin/AdminSlotManager';
 import { VotingAdmin } from '@/components/admin/VotingAdmin';
+import { PackagePricingManager } from '@/components/admin/PackagePricingManager';
+import { AdminGuide } from '@/components/admin/AdminGuide';
 import type { Tables } from '@/integrations/supabase/types';
 
 type PremiumBanner = Tables<'premium_banners'>;
@@ -280,7 +282,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="slots" className="w-full">
-          <TabsList className="grid w-full grid-cols-8 mb-6">
+          <TabsList className="flex flex-wrap h-auto gap-1 mb-6 justify-start">
             <TabsTrigger value="slots" className="gap-1 text-xs">
               <Server size={14} />
               Slots
@@ -288,6 +290,10 @@ const Admin = () => {
             <TabsTrigger value="voting" className="gap-1 text-xs">
               <BarChart3 size={14} />
               Voting
+            </TabsTrigger>
+            <TabsTrigger value="pricing" className="gap-1 text-xs">
+              <CreditCard size={14} />
+              Pricing
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-1 text-xs">
               <BarChart3 size={14} />
@@ -313,6 +319,10 @@ const Admin = () => {
               <Megaphone size={14} />
               Promos
             </TabsTrigger>
+            <TabsTrigger value="guide" className="gap-1 text-xs">
+              <Shield size={14} />
+              Guide
+            </TabsTrigger>
           </TabsList>
 
           {/* Slot Manager Tab */}
@@ -323,6 +333,11 @@ const Admin = () => {
           {/* Voting Admin Tab */}
           <TabsContent value="voting" className="space-y-6">
             <VotingAdmin />
+          </TabsContent>
+
+          {/* Pricing Manager Tab */}
+          <TabsContent value="pricing" className="space-y-6">
+            <PackagePricingManager />
           </TabsContent>
 
           {/* Analytics Tab */}
@@ -677,6 +692,11 @@ const Admin = () => {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          {/* Admin Guide Tab */}
+          <TabsContent value="guide" className="space-y-6">
+            <AdminGuide />
           </TabsContent>
         </Tabs>
       </div>
