@@ -38,6 +38,10 @@ import AdDetail from "./pages/AdDetail";
 import ServerDetail from "./pages/ServerDetail";
 import UpcomingServersPage from "./pages/UpcomingServersPage";
 import Top50 from "./pages/Top50";
+import Raffles from "./pages/Raffles";
+import CreateRaffle from "./pages/CreateRaffle";
+import RaffleDetail from "./pages/RaffleDetail";
+import SupportChatWidget from "./components/support/SupportChatWidget";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -83,6 +87,9 @@ const App = () => (
             <Route path="/servers/upcoming" element={<UpcomingServersPage />} />
             <Route path="/servers/:slug" element={<ServerDetail />} />
             <Route path="/top-50" element={<Top50 />} />
+            <Route path="/raffles" element={<Raffles />} />
+            <Route path="/raffles/create" element={<CreateRaffle />} />
+            <Route path="/raffles/:id" element={<RaffleDetail />} />
             <Route path="/marketplace-ads" element={<MarketplaceAds />} />
             <Route path="/marketplace-ads/:slug" element={<AdDetail />} />
             <Route path="/services-ads" element={<ServicesAds />} />
@@ -92,6 +99,7 @@ const App = () => (
             <Route path="/create-listing" element={<CreateSlotListing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <SupportChatWidget />
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>
