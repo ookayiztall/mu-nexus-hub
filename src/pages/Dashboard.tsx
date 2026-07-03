@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { ImageUpload } from '@/components/upload/ImageUpload';
 import { SEOHead } from '@/components/SEOHead';
 import { MySlotListings } from '@/components/dashboard/MySlotListings';
+import { MyRafflesDashboard } from '@/components/dashboard/MyRafflesDashboard';
 import { marketplaceCategories, serviceCategories } from '@/lib/categories';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -288,7 +289,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="homepage" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="homepage" className="gap-2">
               <LayoutGrid size={16} />
               Homepage Listings
@@ -301,11 +302,19 @@ const Dashboard = () => {
               <Megaphone size={16} />
               My Ads ({ads.length})
             </TabsTrigger>
+            <TabsTrigger value="raffles" className="gap-2">
+              <Crown size={16} />
+              My Raffles
+            </TabsTrigger>
           </TabsList>
 
           {/* Homepage Listings Tab */}
           <TabsContent value="homepage" className="space-y-6">
             <MySlotListings />
+          </TabsContent>
+
+          <TabsContent value="raffles" className="space-y-6">
+            <MyRafflesDashboard />
           </TabsContent>
 
           {/* Servers Tab */}
