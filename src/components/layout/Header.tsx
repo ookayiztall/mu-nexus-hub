@@ -135,6 +135,11 @@ const Header = () => {
             Vote Rankings
           </Button>
 
+          <Button variant="ghost" size="sm" className="text-sm" onClick={() => navigate('/raffles')}>
+            <Crown size={14} className="mr-1" />
+            Raffles
+          </Button>
+
           <Button variant="ghost" size="sm" className="text-sm" onClick={() => navigate('/pricing')}>
             <Crown size={14} className="mr-1" />
             Premium

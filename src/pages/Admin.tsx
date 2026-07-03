@@ -30,6 +30,7 @@ import { AdminSlotManager } from '@/components/admin/AdminSlotManager';
 import { VotingAdmin } from '@/components/admin/VotingAdmin';
 import { PackagePricingManager } from '@/components/admin/PackagePricingManager';
 import { AdminGuide } from '@/components/admin/AdminGuide';
+import { AdminSupportChat } from '@/components/admin/AdminSupportChat';
 import type { Tables } from '@/integrations/supabase/types';
 
 type PremiumBanner = Tables<'premium_banners'>;
@@ -319,11 +320,19 @@ const Admin = () => {
               <Megaphone size={14} />
               Promos
             </TabsTrigger>
+            <TabsTrigger value="support" className="gap-1 text-xs">
+              <Users size={14} />
+              Support
+            </TabsTrigger>
             <TabsTrigger value="guide" className="gap-1 text-xs">
               <Shield size={14} />
               Guide
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="support" className="space-y-6">
+            <AdminSupportChat />
+          </TabsContent>
 
           {/* Slot Manager Tab */}
           <TabsContent value="slots" className="space-y-6">
