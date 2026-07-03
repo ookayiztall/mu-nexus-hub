@@ -55,7 +55,7 @@ const SupportChatWidget = () => {
         setConversationId(convo.id);
         setUnread(convo.user_unread_count || 0);
         const { data: msgs } = await supabase.from('support_messages').select('*').eq('conversation_id', convo.id).order('created_at');
-        setMessages((msgs as SupportMsg[]) || []);
+        setMessages((msgs as unknown as SupportMsg[]) || []);
       }
     })();
   }, [user]);

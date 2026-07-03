@@ -57,7 +57,7 @@ export const AdminSupportChat = () => {
 
   const loadMessages = async (id: string) => {
     const { data } = await supabase.from('support_messages').select('*').eq('conversation_id', id).order('created_at');
-    setMessages((data as Msg[]) || []);
+    setMessages((data as unknown as Msg[]) || []);
     await supabase.from('support_conversations').update({ admin_unread_count: 0 }).eq('id', id);
   };
 
