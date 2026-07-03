@@ -707,6 +707,83 @@ export type Database = {
         }
         Relationships: []
       }
+      raffle_entries: {
+        Row: {
+          created_at: string
+          id: string
+          raffle_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raffle_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          raffle_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_entries_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raffles: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          creator_id: string
+          description: string
+          end_at: string
+          id: string
+          participant_count: number
+          prize: string
+          start_at: string
+          status: string
+          title: string
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          creator_id: string
+          description: string
+          end_at: string
+          id?: string
+          participant_count?: number
+          prize: string
+          start_at?: string
+          status?: string
+          title: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          creator_id?: string
+          description?: string
+          end_at?: string
+          id?: string
+          participant_count?: number
+          prize?: string
+          start_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           content: string | null
@@ -1090,6 +1167,80 @@ export type Database = {
             columns: ["package_id"]
             isOneToOne: false
             referencedRelation: "pricing_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_conversations: {
+        Row: {
+          admin_unread_count: number
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_unread_count: number
+        }
+        Insert: {
+          admin_unread_count?: number
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_unread_count?: number
+        }
+        Update: {
+          admin_unread_count?: number
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_unread_count?: number
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_admin: boolean
+          is_read: boolean
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          is_read?: boolean
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          is_read?: boolean
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "support_conversations"
             referencedColumns: ["id"]
           },
         ]
