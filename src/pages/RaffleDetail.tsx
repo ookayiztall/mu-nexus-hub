@@ -6,7 +6,8 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Users, Clock, Loader2, Crown, Trash2 } from 'lucide-react';
+import { Trophy, Users, Clock, Loader2, Crown, Trash2, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
 import { SEOHead } from '@/components/SEOHead';
@@ -18,6 +19,7 @@ const RaffleDetail = () => {
   const [raffle, setRaffle] = useState<any>(null);
   const [creator, setCreator] = useState<any>(null);
   const [winner, setWinner] = useState<any>(null);
+  const [draw, setDraw] = useState<any>(null);
   const [entered, setEntered] = useState(false);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
@@ -51,6 +53,17 @@ const RaffleDetail = () => {
     if (r.winner_id) {
       const { data: wp } = await supabase.from('profiles').select('user_id, display_name, avatar_url').eq('user_id', r.winner_id).maybeSingle();
       setWinner(wp);
+    }
+
+    if (r.status === 'completed') {
+      const { data: d } = await supabase
+        .from('raffle_draws')
+        .select('*')
+        .eq('raffle_id', r.id)
+        .order('drawn_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setDraw(d);
     }
 
     if (user) {
