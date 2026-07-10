@@ -34,11 +34,14 @@ const SupportChatWidget = () => {
   // Hide on admin/auth
   const hide = location.pathname.startsWith('/admin') || location.pathname.startsWith('/auth');
 
-  // Restore draft after login
+  // Restore draft after login and auto-send it
   useEffect(() => {
-    if (user) {
-      const draft = localStorage.getItem(DRAFT_KEY);
-      if (draft) { setText(draft); setOpen(true); }
+    if (!user) return;
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      setText(draft);
+      setOpen(true);
+      toast.success('Welcome back! Your draft message was restored.');
     }
   }, [user]);
 
@@ -84,15 +87,19 @@ const SupportChatWidget = () => {
     }
   }, [open, minimized, unread, conversationId, user]);
 
+  const saveDraftAndSignup = () => {
+    const content = text.trim();
+    if (content) {
+      localStorage.setItem(DRAFT_KEY, content);
+      toast.info("We've saved your message. Create an account to send it.");
+    }
+    navigate('/auth');
+  };
+
   const send = async () => {
     const content = text.trim();
     if (!content) return;
-    if (!user) {
-      localStorage.setItem(DRAFT_KEY, content);
-      toast.info('Please sign in to send your message. Your message will be preserved.');
-      navigate('/auth');
-      return;
-    }
+    if (!user) { saveDraftAndSignup(); return; }
     if (!conversationId) return;
     const { error } = await supabase.from('support_messages').insert({
       conversation_id: conversationId, sender_id: user.id, is_admin: false, content,
@@ -130,11 +137,19 @@ const SupportChatWidget = () => {
           {!minimized && (
             <>
               <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 text-sm">
-                {messages.length === 0 && (
+                {!user && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <p className="font-semibold text-foreground mb-1">👋 Welcome!</p>
+                    <p className="text-muted-foreground">
+                      Want to play? Want to build? Want to advertise or promote your server?
+                      Type your question below — you'll need a free account to send it.
+                    </p>
+                  </div>
+                )}
+                {user && messages.length === 0 && (
                   <div className="bg-muted rounded-lg p-3 text-muted-foreground">
                     <p className="font-semibold text-foreground mb-1">Need help?</p>
-                    <p>Want to play? Want to build? Want to advertise or promote your server?</p>
-                    <p className="mt-2">Send us your questions—we're here to help!</p>
+                    <p>Send us your questions — we're here to help!</p>
                   </div>
                 )}
                 {messages.map(m => (
@@ -146,13 +161,34 @@ const SupportChatWidget = () => {
                   </div>
                 ))}
               </div>
-              <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-2 border-t flex gap-2">
-                <Input value={text} onChange={e => setText(e.target.value)} placeholder={user ? 'Type a message...' : 'Sign in to send messages'} className="text-sm" />
-                <Button type="submit" size="icon" disabled={!user || !text.trim()} title={!user ? 'Sign in to send' : 'Send'}>
-                  <Send size={16} />
-                </Button>
+              <form onSubmit={(e) => { e.preventDefault(); send(); }} className="p-2 border-t space-y-2">
+                <div className="flex gap-2">
+                  <Input
+                    value={text}
+                    onChange={e => setText(e.target.value)}
+                    placeholder={user ? 'Type a message…' : 'Draft your message…'}
+                    className="text-sm"
+                  />
+                  {user ? (
+                    <Button type="submit" size="icon" disabled={!text.trim()} title="Send">
+                      <Send size={16} />
+                    </Button>
+                  ) : (
+                    <Button type="button" size="sm" onClick={saveDraftAndSignup} disabled={!text.trim()} title="Create a free account to send">
+                      Sign up to send
+                    </Button>
+                  )}
+                </div>
+                {!user && (
+                  <p className="text-[11px] text-muted-foreground text-center">
+                    Already have an account?{' '}
+                    <button type="button" className="underline text-primary" onClick={saveDraftAndSignup}>
+                      Sign in
+                    </button>
+                    {' '}— your draft is saved automatically.
+                  </p>
+                )}
               </form>
-              {!user && <p className="text-[10px] text-muted-foreground px-3 pb-2">Please <button className="underline" onClick={() => navigate('/auth')}>sign in</button> to send messages.</p>}
             </>
           )}
         </Card>

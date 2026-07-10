@@ -6,7 +6,8 @@ import Header from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Users, Clock, Loader2, Crown, Trash2 } from 'lucide-react';
+import { Trophy, Users, Clock, Loader2, Crown, Trash2, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
 import { SEOHead } from '@/components/SEOHead';
@@ -18,6 +19,7 @@ const RaffleDetail = () => {
   const [raffle, setRaffle] = useState<any>(null);
   const [creator, setCreator] = useState<any>(null);
   const [winner, setWinner] = useState<any>(null);
+  const [draw, setDraw] = useState<any>(null);
   const [entered, setEntered] = useState(false);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
@@ -51,6 +53,17 @@ const RaffleDetail = () => {
     if (r.winner_id) {
       const { data: wp } = await supabase.from('profiles').select('user_id, display_name, avatar_url').eq('user_id', r.winner_id).maybeSingle();
       setWinner(wp);
+    }
+
+    if (r.status === 'completed') {
+      const { data: d } = await supabase
+        .from('raffle_draws')
+        .select('*')
+        .eq('raffle_id', r.id)
+        .order('drawn_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setDraw(d);
     }
 
     if (user) {
@@ -151,6 +164,58 @@ const RaffleDetail = () => {
               <p className="font-semibold text-lg">{winner.display_name || 'Anonymous'}</p>
               <p className="text-xs text-muted-foreground">Selected randomly from {raffle.participant_count} participants</p>
             </CardContent>
+          </Card>
+        )}
+
+        {draw && (
+          <Card className="mb-6 border-primary/20">
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <button className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/40 rounded-t-lg">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-semibold text-sm">Fairness &amp; Audit Trail</p>
+                      <p className="text-xs text-muted-foreground">Verify how the winner was selected</p>
+                    </div>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0 text-sm space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div><span className="text-muted-foreground">Drawn at:</span> <span className="font-mono">{format(new Date(draw.drawn_at), 'PPpp')}</span></div>
+                    <div><span className="text-muted-foreground">Participants:</span> <span className="font-mono">{draw.participant_count}</span></div>
+                    <div><span className="text-muted-foreground">Winner index:</span> <span className="font-mono">{draw.winner_index ?? 'n/a'}</span></div>
+                    <div><span className="text-muted-foreground">Random source:</span> <span className="font-mono">{draw.random_source}</span></div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Algorithm</p>
+                    <code className="block bg-muted p-2 rounded text-[11px] break-all">{draw.algorithm}</code>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Random seed (256-bit, CSPRNG)</p>
+                    <code className="block bg-muted p-2 rounded text-[11px] break-all">{draw.random_seed}</code>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Participant list (ordered by entry time)</p>
+                    <div className="bg-muted p-2 rounded max-h-40 overflow-y-auto space-y-1">
+                      {(draw.participant_ids as string[])?.map((pid, i) => (
+                        <div key={pid} className={`text-[11px] font-mono flex gap-2 ${i === draw.winner_index ? 'text-primary font-bold' : ''}`}>
+                          <span className="w-8 text-right text-muted-foreground">#{i}</span>
+                          <span className="break-all">{pid}</span>
+                          {i === draw.winner_index && <span>← winner</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Verification: take the first 4 bytes of the seed as a big-endian uint32, then modulo the participant count — the result equals the winner's index in the ordered list above.
+                  </p>
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
           </Card>
         )}
 
