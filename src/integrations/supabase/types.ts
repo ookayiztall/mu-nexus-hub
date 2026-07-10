@@ -707,6 +707,56 @@ export type Database = {
         }
         Relationships: []
       }
+      raffle_draws: {
+        Row: {
+          algorithm: string
+          created_at: string
+          drawn_at: string
+          id: string
+          participant_count: number
+          participant_ids: string[]
+          raffle_id: string
+          random_seed: string
+          random_source: string
+          winner_index: number | null
+          winner_user_id: string | null
+        }
+        Insert: {
+          algorithm?: string
+          created_at?: string
+          drawn_at?: string
+          id?: string
+          participant_count?: number
+          participant_ids?: string[]
+          raffle_id: string
+          random_seed: string
+          random_source: string
+          winner_index?: number | null
+          winner_user_id?: string | null
+        }
+        Update: {
+          algorithm?: string
+          created_at?: string
+          drawn_at?: string
+          id?: string
+          participant_count?: number
+          participant_ids?: string[]
+          raffle_id?: string
+          random_seed?: string
+          random_source?: string
+          winner_index?: number | null
+          winner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_draws_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       raffle_entries: {
         Row: {
           created_at: string
