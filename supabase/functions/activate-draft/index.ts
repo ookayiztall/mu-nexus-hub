@@ -72,76 +72,151 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Verify payment if stripe session provided
-    if (stripeSessionId) {
-      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-      if (stripeKey) {
-        const Stripe = (await import("https://esm.sh/stripe@14.21.0")).default;
-        const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
-        
-        try {
-          const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
-          console.log("Stripe session status:", session.payment_status);
-          
-          if (session.payment_status !== "paid") {
-            return new Response(
-              JSON.stringify({ error: "Payment not completed", status: session.payment_status }),
-              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-        } catch (stripeError) {
-          console.error("Stripe session verification failed:", stripeError);
-          // Continue anyway - if user paid, we should activate
-        }
-      }
+    // Payment verification is REQUIRED. Refuse if no payment reference provided.
+    if (!stripeSessionId && !paypalOrderId) {
+      return new Response(
+        JSON.stringify({ error: "Payment reference required" }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Verify PayPal order if provided
-    if (paypalOrderId) {
+    let paymentVerified = false;
+
+    // Verify Stripe session
+    if (stripeSessionId) {
+      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+      if (!stripeKey) {
+        return new Response(
+          JSON.stringify({ error: "Payment provider not configured" }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const Stripe = (await import("https://esm.sh/stripe@14.21.0")).default;
+      const stripe = new Stripe(stripeKey, { apiVersion: "2024-06-20" });
+
+      let session;
+      try {
+        session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+      } catch (stripeError) {
+        console.error("Stripe session verification failed:", stripeError);
+        return new Response(
+          JSON.stringify({ error: "Unable to verify payment session" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (session.payment_status !== "paid") {
+        return new Response(
+          JSON.stringify({ error: "Payment not completed", status: session.payment_status }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify the session belongs to this user and this draft
+      const md = session.metadata ?? {};
+      if (md.user_id && md.user_id !== user.id) {
+        return new Response(
+          JSON.stringify({ error: "Payment does not belong to this user" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (md.draft_id && md.draft_id !== draftId) {
+        return new Response(
+          JSON.stringify({ error: "Payment does not match requested draft" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (md.slot_id && Number(md.slot_id) !== Number(slotId)) {
+        return new Response(
+          JSON.stringify({ error: "Payment does not match requested slot" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      paymentVerified = true;
+    }
+
+    // Verify PayPal order
+    if (!paymentVerified && paypalOrderId) {
       const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
       const clientSecret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-      
-      if (clientId && clientSecret) {
+      if (!clientId || !clientSecret) {
+        return new Response(
+          JSON.stringify({ error: "PayPal not configured" }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const isSandbox = clientId.startsWith("sb-") || clientId.startsWith("A");
+      const baseUrl = isSandbox ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
+
+      const authResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+        },
+        body: "grant_type=client_credentials",
+      });
+      if (!authResponse.ok) {
+        return new Response(
+          JSON.stringify({ error: "PayPal auth failed" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const authData = await authResponse.json();
+      const orderResponse = await fetch(`${baseUrl}/v2/checkout/orders/${paypalOrderId}`, {
+        headers: {
+          "Authorization": `Bearer ${authData.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (!orderResponse.ok) {
+        return new Response(
+          JSON.stringify({ error: "Unable to verify PayPal order" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const orderData = await orderResponse.json();
+      if (orderData.status !== "COMPLETED") {
+        return new Response(
+          JSON.stringify({ error: "PayPal payment not completed", status: orderData.status }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      // Verify the order's custom_id references this user and draft
+      const customId = orderData.purchase_units?.[0]?.custom_id;
+      if (customId) {
         try {
-          // Get PayPal access token
-          const authResponse = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              "Authorization": `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-            },
-            body: "grant_type=client_credentials",
-          });
-          
-          if (authResponse.ok) {
-            const authData = await authResponse.json();
-            
-            // Verify order status
-            const orderResponse = await fetch(`https://api-m.sandbox.paypal.com/v2/checkout/orders/${paypalOrderId}`, {
-              headers: {
-                "Authorization": `Bearer ${authData.access_token}`,
-                "Content-Type": "application/json",
-              },
-            });
-            
-            if (orderResponse.ok) {
-              const orderData = await orderResponse.json();
-              console.log("PayPal order status:", orderData.status);
-              
-              if (orderData.status !== "COMPLETED" && orderData.status !== "APPROVED") {
-                return new Response(
-                  JSON.stringify({ error: "PayPal payment not completed", status: orderData.status }),
-                  { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-                );
-              }
-            }
+          const customData = JSON.parse(customId);
+          if (customData.user_id && customData.user_id !== user.id) {
+            return new Response(
+              JSON.stringify({ error: "PayPal order does not belong to this user" }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
           }
-        } catch (paypalError) {
-          console.error("PayPal verification failed:", paypalError);
-          // Continue anyway
+          if (customData.draft_id && customData.draft_id !== draftId) {
+            return new Response(
+              JSON.stringify({ error: "PayPal order does not match requested draft" }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        } catch {
+          // custom_id not JSON, fall through — reject to be safe
+          return new Response(
+            JSON.stringify({ error: "PayPal order reference invalid" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
       }
+      paymentVerified = true;
     }
+
+    if (!paymentVerified) {
+      return new Response(
+        JSON.stringify({ error: "Payment verification failed" }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
 
     // Calculate expiration date
     const expiresAt = new Date();
