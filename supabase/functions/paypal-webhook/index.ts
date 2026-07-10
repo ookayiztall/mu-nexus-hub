@@ -151,70 +151,81 @@ serve(async (req) => {
       );
     }
 
-    // Verify webhook signature if webhook ID is configured
-    if (webhookId) {
-      const transmissionId = req.headers.get("paypal-transmission-id");
-      const transmissionTime = req.headers.get("paypal-transmission-time");
-      const certUrl = req.headers.get("paypal-cert-url");
-      const authAlgo = req.headers.get("paypal-auth-algo");
-      const transmissionSig = req.headers.get("paypal-transmission-sig");
-
-      if (transmissionId && transmissionTime && certUrl && authAlgo && transmissionSig) {
-        console.log("Verifying PayPal webhook signature...");
-        
-        // Get OAuth token
-        const authString = btoa(`${clientId}:${clientSecret}`);
-        const isSandbox = clientId.startsWith("AV") || clientId.startsWith("sb-") || clientId.includes("sandbox");
-        const paypalBaseUrl = isSandbox ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
-        
-        const tokenResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Basic ${authString}`,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: "grant_type=client_credentials",
-        });
-
-        if (tokenResponse.ok) {
-          const tokenData = await tokenResponse.json();
-          
-          // Verify webhook signature
-          const verifyResponse = await fetch(`${paypalBaseUrl}/v1/notifications/verify-webhook-signature`, {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${tokenData.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              auth_algo: authAlgo,
-              cert_url: certUrl,
-              transmission_id: transmissionId,
-              transmission_sig: transmissionSig,
-              transmission_time: transmissionTime,
-              webhook_id: webhookId,
-              webhook_event: event,
-            }),
-          });
-
-          if (verifyResponse.ok) {
-            const verifyData = await verifyResponse.json();
-            if (verifyData.verification_status !== "SUCCESS") {
-              console.error("PayPal webhook signature verification failed:", verifyData);
-              return new Response(
-                JSON.stringify({ error: "Webhook signature verification failed" }),
-                { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-              );
-            }
-            console.log("PayPal webhook signature verified successfully");
-          } else {
-            console.warn("Could not verify webhook signature, proceeding anyway");
-          }
-        }
-      } else {
-        console.warn("Missing webhook signature headers, proceeding without verification");
-      }
+    // Enforce webhook signature verification when configured
+    if (!webhookId) {
+      console.error("PAYPAL_WEBHOOK_ID not configured — refusing to process webhook");
+      return new Response(
+        JSON.stringify({ error: "Webhook verification required", processed: false }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const transmissionId = req.headers.get("paypal-transmission-id");
+    const transmissionTime = req.headers.get("paypal-transmission-time");
+    const certUrl = req.headers.get("paypal-cert-url");
+    const authAlgo = req.headers.get("paypal-auth-algo");
+    const transmissionSig = req.headers.get("paypal-transmission-sig");
+
+    if (!transmissionId || !transmissionTime || !certUrl || !authAlgo || !transmissionSig) {
+      console.error("Missing PayPal webhook signature headers — rejecting");
+      return new Response(
+        JSON.stringify({ error: "Missing webhook signature headers" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const authString = btoa(`${clientId}:${clientSecret}`);
+    const isSandbox = clientId.startsWith("AV") || clientId.startsWith("sb-") || clientId.includes("sandbox");
+    const paypalBaseUrl = isSandbox ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
+
+    const tokenResponse = await fetch(`${paypalBaseUrl}/v1/oauth2/token`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${authString}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+    });
+    if (!tokenResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "PayPal auth failed" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const tokenData = await tokenResponse.json();
+
+    const verifyResponse = await fetch(`${paypalBaseUrl}/v1/notifications/verify-webhook-signature`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${tokenData.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        auth_algo: authAlgo,
+        cert_url: certUrl,
+        transmission_id: transmissionId,
+        transmission_sig: transmissionSig,
+        transmission_time: transmissionTime,
+        webhook_id: webhookId,
+        webhook_event: event,
+      }),
+    });
+    if (!verifyResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: "Unable to verify webhook signature" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const verifyData = await verifyResponse.json();
+    if (verifyData.verification_status !== "SUCCESS") {
+      console.error("PayPal webhook signature verification failed:", verifyData);
+      return new Response(
+        JSON.stringify({ error: "Invalid webhook signature" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log("PayPal webhook signature verified successfully");
+
 
     // Process the webhook event
     const purchaseUnit = event.resource.purchase_units?.[0];
