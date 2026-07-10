@@ -1358,9 +1358,38 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      server_vote_counts: {
+        Row: {
+          server_id: string | null
+          vote_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "server_votes_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_my_profile: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          stripe_account_id: string
+          stripe_onboarding_complete: boolean
+          updated_at: string
+          user_id: string
+          user_type: string
+        }[]
+      }
       get_user_conversations: {
         Args: never
         Returns: {
