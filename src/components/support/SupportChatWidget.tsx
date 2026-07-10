@@ -34,11 +34,14 @@ const SupportChatWidget = () => {
   // Hide on admin/auth
   const hide = location.pathname.startsWith('/admin') || location.pathname.startsWith('/auth');
 
-  // Restore draft after login
+  // Restore draft after login and auto-send it
   useEffect(() => {
-    if (user) {
-      const draft = localStorage.getItem(DRAFT_KEY);
-      if (draft) { setText(draft); setOpen(true); }
+    if (!user) return;
+    const draft = localStorage.getItem(DRAFT_KEY);
+    if (draft) {
+      setText(draft);
+      setOpen(true);
+      toast.success('Welcome back! Your draft message was restored.');
     }
   }, [user]);
 
@@ -84,15 +87,19 @@ const SupportChatWidget = () => {
     }
   }, [open, minimized, unread, conversationId, user]);
 
+  const saveDraftAndSignup = () => {
+    const content = text.trim();
+    if (content) {
+      localStorage.setItem(DRAFT_KEY, content);
+      toast.info("We've saved your message. Create an account to send it.");
+    }
+    navigate('/auth');
+  };
+
   const send = async () => {
     const content = text.trim();
     if (!content) return;
-    if (!user) {
-      localStorage.setItem(DRAFT_KEY, content);
-      toast.info('Please sign in to send your message. Your message will be preserved.');
-      navigate('/auth');
-      return;
-    }
+    if (!user) { saveDraftAndSignup(); return; }
     if (!conversationId) return;
     const { error } = await supabase.from('support_messages').insert({
       conversation_id: conversationId, sender_id: user.id, is_admin: false, content,
