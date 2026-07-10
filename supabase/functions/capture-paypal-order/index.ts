@@ -162,10 +162,19 @@ serve(async (req) => {
     const purchaseUnit = orderData.purchase_units?.[0];
     const referenceId = purchaseUnit?.reference_id || "";
     const parts = referenceId.split("_");
-    
+
     const productType = parts[0] || "unknown";
     const productId = parts[1] || null;
     const userId = parts[2] || null;
+
+    // Verify the order belongs to the authenticated user
+    if (userId && userId !== user.id) {
+      return new Response(
+        JSON.stringify({ error: "Order does not belong to this user" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
 
     const amount = parseFloat(purchaseUnit?.amount?.value || "0");
     const amountCents = Math.round(amount * 100);
