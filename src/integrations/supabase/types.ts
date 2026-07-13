@@ -1485,6 +1485,16 @@ export type Database = {
         | "content_creators"
         | "event_master"
         | "marketing_growth"
+        | "gm_services"
+        | "translation"
+        | "voice_acting"
+        | "web_development"
+        | "seo_services"
+        | "community_management"
+        | "tournament_organizer"
+        | "consulting"
+        | "graphic_design"
+        | "video_editing"
       user_type: "buyer" | "seller"
       vip_level: "none" | "gold" | "diamond"
     }
@@ -1638,6 +1648,16 @@ export const Constants = {
         "content_creators",
         "event_master",
         "marketing_growth",
+        "gm_services",
+        "translation",
+        "voice_acting",
+        "web_development",
+        "seo_services",
+        "community_management",
+        "tournament_organizer",
+        "consulting",
+        "graphic_design",
+        "video_editing",
       ],
       user_type: ["buyer", "seller"],
       vip_level: ["none", "gold", "diamond"],
