@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { SlotCheckoutModal } from '@/components/checkout/SlotCheckoutModal';
 import { EditDraftModal } from '@/components/dashboard/EditDraftModal';
+import { checkSlotCapacity, formatCapacityMessage, SLOT_CAPACITY } from '@/lib/slotCapacity';
 
 interface SlotPurchase {
   id: string;
@@ -257,8 +258,22 @@ export const MySlotListings = () => {
     setListingToDelete(null);
   };
 
-  const handlePayAndPublish = (listing: SlotListing) => {
+  const handlePayAndPublish = async (listing: SlotListing) => {
     if (!listing.slot_id) return;
+
+    // Enforce capacity limits for capped slots (4, 5, 6)
+    if (SLOT_CAPACITY[listing.slot_id]) {
+      const cap = await checkSlotCapacity(listing.slot_id);
+      if (cap.atCapacity) {
+        toast({
+          title: 'Slot Fully Booked',
+          description: formatCapacityMessage(listing.slot_id, cap),
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     
     // Find the cheapest package for this slot
     const slotPackages = packages.filter(p => p.slot_id === listing.slot_id);

@@ -12,6 +12,7 @@ import { SLOT_CONFIG, getSlotRedirectUrl, isSlotFree, FREE_SLOT_ID } from '@/lib
 import { SlotCheckoutModal } from '@/components/checkout/SlotCheckoutModal';
 import { Badge } from '@/components/ui/badge';
 import { CreateDraftModal } from '@/components/pricing/CreateDraftModal';
+import { checkSlotCapacity, formatCapacityMessage, SLOT_CAPACITY } from '@/lib/slotCapacity';
 
 interface PricingPackage {
   id: string;
@@ -75,6 +76,19 @@ const Pricing = () => {
         variant: 'destructive',
       });
       return;
+    }
+
+    // Enforce capacity limits for capped slots (4, 5, 6)
+    if (SLOT_CAPACITY[pkg.slot_id]) {
+      const cap = await checkSlotCapacity(pkg.slot_id);
+      if (cap.atCapacity) {
+        toast({
+          title: 'Slot Fully Booked',
+          description: formatCapacityMessage(pkg.slot_id, cap),
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     // Open checkout modal
