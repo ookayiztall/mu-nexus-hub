@@ -53,7 +53,7 @@ const PremiumTextServers = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <SectionHeader title="Premium Text Servers" />
+      <SectionHeader title="Premium Mu Online Servers" />
       <div className="p-2 space-y-1">
         {displayServers.map((server, index) => (
           <a

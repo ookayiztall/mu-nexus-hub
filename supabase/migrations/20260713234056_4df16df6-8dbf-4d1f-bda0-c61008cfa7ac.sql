@@ -1,0 +1,10 @@
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'gm_services';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'translation';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'voice_acting';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'web_development';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'seo_services';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'community_management';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'tournament_organizer';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'consulting';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'graphic_design';
+ALTER TYPE public.seller_category ADD VALUE IF NOT EXISTS 'video_editing';

@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2, CreditCard, Wallet } from 'lucide-react';
 import { isSlotFree, getSlotRedirectUrl } from '@/lib/slotConfig';
+import { checkSlotCapacity, formatCapacityMessage, SLOT_CAPACITY } from '@/lib/slotCapacity';
 
 interface SlotCheckoutModalProps {
   isOpen: boolean;
@@ -118,6 +119,19 @@ export const SlotCheckoutModal = ({
       navigate(getSlotRedirectUrl(slotId));
       onClose();
       return;
+    }
+
+    // Enforce capacity limits for capped slots (4, 5, 6)
+    if (SLOT_CAPACITY[slotId]) {
+      const cap = await checkSlotCapacity(slotId);
+      if (cap.atCapacity) {
+        toast({
+          title: 'Slot Fully Booked',
+          description: formatCapacityMessage(slotId, cap),
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     setIsProcessing(true);

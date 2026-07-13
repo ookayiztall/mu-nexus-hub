@@ -53,10 +53,11 @@ const TopServers = () => {
 
   const rankedServers = useMemo(() => {
     const allServers = servers.length > 0 ? servers : fallbackServers;
+    // Randomize order on each load (Fisher-Yates-ish shuffle)
     return [...allServers]
       .map(s => ({ ...s, vote_count: voteCounts[s.id] || 0 }))
-      .sort((a, b) => b.vote_count - a.vote_count)
-      .slice(0, 5);
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 50);
   }, [servers, voteCounts]);
 
   return (
