@@ -40,7 +40,7 @@ export const SLOT_CONFIG = {
   },
   4: {
     id: 4,
-    name: 'Premium Text Servers',
+    name: 'Premium Mu Online Servers',
     description: 'Premium Text Servers Widget',
     createPath: '/create-listing',
     type: 'text-server',
@@ -64,7 +64,7 @@ export const SLOT_CONFIG = {
   },
   6: {
     id: 6,
-    name: 'Upcoming & Recent',
+    name: 'Upcoming & Recent Mu Online Servers',
     description: 'Upcoming & Recent Servers (FREE)',
     createPath: '/create-listing',
     type: 'upcoming-server',

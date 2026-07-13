@@ -26,7 +26,7 @@ const UpcomingServers = () => {
         .select('*')
         .eq('is_active', true)
         .order('open_date', { ascending: true })
-        .limit(10);
+        .limit(5);
       
       if (data && data.length > 0) {
         setServers(data);
@@ -61,7 +61,7 @@ const UpcomingServers = () => {
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <SectionHeader title="Upcoming & Recent" />
+      <SectionHeader title="Upcoming & Recent Mu Online Servers" />
       <div className="p-2 space-y-1.5">
         {displayServers.map((server, index) => (
           <Link
