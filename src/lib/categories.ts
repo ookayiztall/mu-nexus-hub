@@ -26,6 +26,16 @@ export const serviceCategories = [
   { id: 'content_creators', label: 'Content Creators', icon: Users, description: 'YouTube, social media content' },
   { id: 'event_master', label: 'Event Master / Moderator', icon: Award, description: 'In-game events and moderation' },
   { id: 'marketing_growth', label: 'Marketing & Growth', icon: TrendingUp, description: 'Marketing strategies and growth' },
+  { id: 'gm_services', label: 'GM Services', icon: Shield, description: 'Game master and admin services' },
+  { id: 'translation', label: 'Translation Services', icon: Globe, description: 'Translate websites, clients, and content' },
+  { id: 'voice_acting', label: 'Voice Acting / Audio', icon: Video, description: 'Voiceovers, jingles, and audio production' },
+  { id: 'web_development', label: 'Web Development', icon: Code, description: 'Custom web development and integrations' },
+  { id: 'seo_services', label: 'SEO Services', icon: TrendingUp, description: 'Search engine optimization for MU sites' },
+  { id: 'community_management', label: 'Community Management', icon: Users, description: 'Discord, forum, and social community management' },
+  { id: 'tournament_organizer', label: 'Tournament Organizer', icon: Award, description: 'Organize in-game tournaments and prize events' },
+  { id: 'consulting', label: 'Consulting & Coaching', icon: Rocket, description: 'Server launch consulting and player coaching' },
+  { id: 'graphic_design', label: 'Graphic Design', icon: Paintbrush, description: 'Banners, posters, and marketing graphics' },
+  { id: 'video_editing', label: 'Video Editing', icon: Camera, description: 'Trailer editing, montages, and video production' },
 ] as const;
 
 // Combined for onboarding
