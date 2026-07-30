@@ -289,6 +289,10 @@ const Admin = () => {
               <Server size={14} />
               Slots
             </TabsTrigger>
+            <TabsTrigger value="ads" className="gap-1 text-xs">
+              <Megaphone size={14} />
+              Ads
+            </TabsTrigger>
             <TabsTrigger value="voting" className="gap-1 text-xs">
               <BarChart3 size={14} />
               Voting
