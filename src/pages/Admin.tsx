@@ -339,6 +339,12 @@ const Admin = () => {
             <AdminSupportChat />
           </TabsContent>
 
+          {/* Advertisements Tab */}
+          <TabsContent value="ads" className="space-y-6">
+            <AdminAdManager />
+          </TabsContent>
+
+
           {/* Slot Manager Tab */}
           <TabsContent value="slots" className="space-y-6">
             <AdminSlotManager />
