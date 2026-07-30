@@ -31,6 +31,7 @@ import { VotingAdmin } from '@/components/admin/VotingAdmin';
 import { PackagePricingManager } from '@/components/admin/PackagePricingManager';
 import { AdminGuide } from '@/components/admin/AdminGuide';
 import { AdminSupportChat } from '@/components/admin/AdminSupportChat';
+import { AdminAdManager } from '@/components/admin/AdminAdManager';
 import type { Tables } from '@/integrations/supabase/types';
 
 type PremiumBanner = Tables<'premium_banners'>;
